@@ -347,18 +347,18 @@ respuestas[(1, 10, "Predicción")] = [
 
 # %%
 respuestas[(1, 11, "Diversificación")] = [
-    0.75,  # 0. Recursos asignados a Cara: 0.0
-    0.1,  # 1. Recursos asignados a Cara: 0.1
-    0.15,  # 2. Recursos asignados a Cara: 0.2
-    0.20,  # 3. Recursos asignados a Cara: 0.3
-    0.20,  # 4. Recursos asignados a Cara: 0.4
-    0.15,  # 5. Recursos asignados a Cara: 0.5
-    0.1,  # 6. Recursos asignados a Cara: 0.6
-    0.5,  # 7. Recursos asignados a Cara: 0.7
-    0.5,  # 8. Recursos asignados a Cara: 0.8
-    0.25,  # 9. Recursos asignados a Cara: 0.9
+    0,  # 0. Recursos asignados a Cara: 0.0
+    0,  # 1. Recursos asignados a Cara: 0.1
+    0,  # 2. Recursos asignados a Cara: 0.2
+    0,  # 3. Recursos asignados a Cara: 0.3
+    0,  # 4. Recursos asignados a Cara: 0.4
+    0,  # 5. Recursos asignados a Cara: 0.5
+    1/10,  # 6. Recursos asignados a Cara: 0.6
+    2/5,  # 7. Recursos asignados a Cara: 0.7
+    2/5,  # 8. Recursos asignados a Cara: 0.8
+    1/10,  # 9. Recursos asignados a Cara: 0.9
     0,  # 10. Recursos asignados a Cara: 1.0
-    "La verdad no se la respuesta por lo cual los distribui de una forma que lo mas reccomendable este entre asignar un poco menos de la mitad a cara que a seca... La verdad que no estoy muy seguro.",
+    "No hice las cuentas. Pero intuitivamente entiendo que el porcentaje ideal asignado a cara esta entre 0.7 y 0.8 ya que si en cada tirada tenemos 50% de cara y de sello, lo ideal sería apostar siempre un poco mas a cara que a sello. Aproximadamente entre esos valores...",
 ]
 
 # %% [markdown]
@@ -397,7 +397,13 @@ respuestas[(1, 13, "Fondo común")] = [
 # %% [markdown]
 # ### 1.14 Tragedia de los comunes
 #
-# Una casa de apuestas paga 3 por Cara y 1.2 por Sello. La moneda tiene 0.5 de probabilidad de que salga Cara o Sello. Nos ofrecen jugar 1000 veces, apostando en cada ocasión todos nuestros recursos, 50% a Cara y 50% a Sello. Supongamos que para nuestras apuestas contamos con el apoyo de otras 100 personas que están aportando en cada paso temporal a un fondo que se divide en partes iguales. ¿Nos conviene aportar al fondo común o nos conviene dejar de aportar y seguir recibiendo la cuota del fondo común?
+# Una casa de apuestas paga 3 por Cara y 1.2 por Sello. La moneda tiene 0.5 de 
+# probabilidad de que salga Cara o Sello. Nos ofrecen jugar 1000 veces,
+# apostando en cada ocasión todos nuestros recursos, 50% a Cara y 50% a Sello. 
+# Supongamos que para nuestras apuestas contamos con el apoyo de otras 100 personas 
+# que están aportando en cada paso temporal a un fondo que se divide en partes iguales.
+# ¿Nos conviene aportar al fondo común o nos conviene dejar de aportar 
+# y seguir recibiendo la cuota del fondo común?
 #
 # 0. Nos conviene aportar al fondo común
 # 1. Es indistinto
@@ -408,6 +414,6 @@ respuestas[(1, 13, "Fondo común")] = [
 respuestas[(1, 14, "Tragedia de los comunes")] = [
     0,  # 0. Nos conviene aportar al fondo común
     0,  # 1. Es indistinto
-    0,  # 1. Nos conviene dejar de aportar mientras seguimos recibiendo la cuota del fondo común
-    "Justifique brevemente.",
+    1,  # 1. Nos conviene dejar de aportar mientras seguimos recibiendo la cuota delfondo común
+    "Claramente me conviene dejar de aportar ya que estaría manteniendo mi plata, y recibiendo la de los demas... En caso de que luego no se reparta mas equitativamente, habría que pensar otra estrategia... Pero con este escenario en el peor de los casos, no gano plata. Nunca perdería.",
 ]
