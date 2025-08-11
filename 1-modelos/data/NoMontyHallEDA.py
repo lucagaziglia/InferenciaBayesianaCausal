@@ -11,7 +11,9 @@ import seaborn as sns
 #%%
 
 df = pd.read_csv("NoMontyHall.csv")
-df.describe
+
+# Mostrar un resumen estadístico de las columnas del dataset
+print(df.describe())
 
 #%%
 
