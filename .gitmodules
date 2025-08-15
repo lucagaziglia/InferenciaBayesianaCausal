@@ -1,0 +1,3 @@
+[submodule "materiales_del_curso"]
+	path = materiales_del_curso
+	url = https://github.com/MetodosBayesianos/IBC1.2025.2.git
