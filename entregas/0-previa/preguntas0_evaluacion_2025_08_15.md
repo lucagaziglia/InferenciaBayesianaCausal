@@ -5,7 +5,7 @@ Diferencia (log) respecto de la referencia = inf
 Diferencia (log) respecto de la referencia por pregunta = [(0, 0.0), (1, 0.0), (2, 0.0), (3, 0.0), (4, -inf), (8, -0.4150374992788438), (9, -6.643856189774724), (10, -inf), (11, -inf), (12, -0.00014427671804501932), (13, 0.0), (14, -inf)]
 Respuestas no editadas = 0
 Respuestas con justificaciones con menos de 40 caracteres = 0
-Podio = 8/10
+Podio = 8/8
 ## Archivo evaluado
 ```
 # ---
