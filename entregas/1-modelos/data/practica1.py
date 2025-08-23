@@ -51,8 +51,6 @@ def prcs_M(r,c,s,m): # P(r,c,s|M)
       raise ValueError("m debe ser 0 o 1")
     return pr(r) * pc(c) * (ps_rM0(s,r) if m == 0 else ps_rcM1(s,r,c))
 
-## Aca empiezo a modificar yo.
-
 def ps_cM(s,c,m):
     # Predicción del segundo dato dado el primero
     if s not in H or c not in H:
@@ -72,8 +70,6 @@ def pr_csM(r,c,s,m):
     res = num / den # P(r|c,s,M) = P(r,c,s|M)/p(c,s|M)
     return res
 
-### Tamos hasta aca
-
 def pEpisodio_M(c,s,r,m): # P(Datos = (c,s,r) | M)
     # Predicción del conjunto de datos P(c,s,r|M)
     if m not in [0,1]:
@@ -82,7 +78,6 @@ def pEpisodio_M(c,s,r,m): # P(Datos = (c,s,r) | M)
         raise ValueError("s,r,c deben ser 0,1,2")
     return prcs_M(r,c,s,m)
 
-# 1.2 Simular datos con Monty Hall
 def simular(T=16,seed=0):
     import pandas as pd
     np.random.seed(seed)
@@ -93,130 +88,118 @@ def simular(T=16,seed=0):
         s = np.random.choice(3, p=[ps_rcM1(s_,r,c) for s_ in H]) # señalada
         Datos.append((c,s,r))
     return Datos
-T = 1000
-Datos = simular(T, 16)
 
-# 1.3 Predicción P(Datos = {(c0,s0,r0),(c1,s1,r1),...} | M )
+
+Datos = simular()
 
 def _secuencia_de_predicciones(Datos, m):
-    # Si se guarda la lista de predicciones de cada uno
-    # de los episodios [P(Episodio0|M),P(Episodio1|M),... ]
-    # esto va a servir tanto para calcular la predicción
-    # P(Datos = {(c0,s0,r0),(c1,s1,r1),...} | M ),
-    # pero también va a servir después para graficar como
-    # va cambiando el posterior de los modelos en el tiempo
+
     return [pEpisodio_M(c, s, r, m) for (c, s, r) in Datos]
 
 def pDatos_M(Datos, m):
-    # P(Datos | M) = ∏_t P(c_t, s_t, r_t | M)
-    if m not in [0,1]:
-      raise ValueError("m debe ser 0 o 1")
-    probs = [pEpisodio_M(c, s, r, m) for (c, s, r) in Datos]
-    prod = 1.0
-    for p in probs:
+    preds = _secuencia_de_predicciones(Datos, m)
+    prod = 1.0 
+    for p in preds: 
         prod *= p
-    return prod
+    return prod # P(Datos|M) = producto de las predicciones de cada episodio     
+
+
+# 1.4 Calcular predicción de los datos P(Datos)
 
 def pM(m):
-  if m not in [0,1]:
-    raise ValueError("m debe ser 0 o 1")
-    # Prior de los modelos
-    # A priori no sé nada, por lo que pongo un prior uniforme
-  return 1/2
+    if m not in [0, 1]:
+        raise ValueError("Modelo debe ser 0 o 1")
+    return 1/2
 
 def pDatos(Datos):
-    evidencia = 0
-    # sum_m P(Datos|M=m)P(M=m)
-    for m in [0,1]:
-      prediccion = pDatos_M(Datos, m)
-      creencia = pM(m)
-      evidencia += prediccion * creencia
-    return evidencia
+    pD = 0.0
+    for m in [0, 1, 2]: #Regla de la suma
+        try:
+            pD += pDatos_M(Datos, m) * pM(m) #Regla del producto
+        except ValueError:
+            # pDatos_M todavía no soporta el modelo alternativo (el modelo correspondiente a m=2 antes de 2.x)
+            continue
+    return pD
 
 # 1.5 Posterior de los modelos
 
-def pM_Datos(m,Datos):
-    # P(M | Datos = {(c0,s0,r0),(c1,s1,r1),...})
-    likelihood = pDatos_M(Datos, m)
-    prior = pM(m)
-    evidencia = pDatos(Datos)
-    if evidencia == 0:
-      raise ZeroDivisionError("La evidencia no puede ser nula")
-    return likelihood*prior/evidencia
-
+def pM_Datos(m, Datos):
+    denom = pDatos(Datos)
+    if denom == 0:
+        return 0.0
+    num = pDatos_M(Datos, m) * pM(m)
+    return num / denom
 
 def lista_pM_Datos(m, Datos):
-    lista = [pM(m)]  # prior en t=0
-    datos_parciales = []
-    for (c, s, r) in Datos:
-        datos_parciales.append((c, s, r))
-        like = pDatos_M(datos_parciales, m)      
-        evid = pDatos(datos_parciales)           
-        post = like * pM(m) / evid               
-        lista.append(post)
-    return lista
+    posts = [pM(m)]  # prior en t=0
+    for t in range(1, len(Datos) + 1):
+        posts.append(pM_Datos(m, Datos[:t]))
+    return posts
 
 plt.plot(lista_pM_Datos(0, Datos), label="M0: Base")
 plt.plot(lista_pM_Datos(1, Datos), label="M1: Monty Hall")
 plt.legend()
 plt.show()
 
-
-# 2.1
+# 2.1 
 
 def pM(m): #Redefino el prior porque ahora consideramos 3 modelos
     if m not in [0, 1, 2]:
         raise ValueError("Modelo debe ser 0 o 1")
     return 1/3
 
-grid = np.linspace(0, 1, 21)
-def pp_Datos(p,Datos):
-    prior_p = 1 / grid.size  # Asumimos una distribución uniforme sobre p
-    likelihood_p = 1.0 #inicializamos la verosimilitud
+
+def pcsr_p(c, s, r, p):
+    # P(c,s,r | p) del modelo alternativo
+    mezcla = (1 - p) * ps_rM0(s, r) + p * ps_rcM1(s, r, c)
+    return pr(r) * pc(c) * mezcla
+
+
+def pp_Datos(Datos):
+    p_grid = np.linspace(0, 1, 101)
+    prior = np.ones_like(p_grid) / 101  # prior uniforme en p
+    likelihood = np.ones_like(p_grid, dtype=float)
 
     for (c, s, r) in Datos:
-        term = (1 - p) * ps_rM0(s, r) + p * ps_rcM1(s, r, c) #(1-p) probabilidad de que se olvide, y p de que se acuerde, dependiendo el caso usa cada modelo y lo ponderamos
-        likelihood_p *= term * pr(r) * pc(c)
-    num = likelihood_p * prior_p  # P(Datos | p) * P(p)
-    den = 0
-    for p_grid in grid:
-        likelihood_p_grid = 1.0
-        prior_p_grid = 1 / len(grid)
-        for (c, s, r) in Datos:
-            term2 = (1 - p_grid) * ps_rM0(s, r) + p_grid * ps_rcM1(s, r, c) # Repetimos el mismo cálculo que antes, pero ahora para cada valor de p_grid
-            likelihood_p_grid *= term2 * pr(r) * pc(c) 
-        den += likelihood_p_grid * (1 / grid.size)  # P(Datos | p_grid) * P(p_grid)
-    if den == 0:
-        return 0
-    return num / den
+        # verosimilitud episodio para cada p de la grilla
+        likelihood *= np.array([pcsr_p(c, s, r, p) for p in p_grid])
 
+    num = prior * likelihood
+    den = np.sum(prior * likelihood)
+    return num / den
 
 # 2.2
 
+def pa_p(a, p):
+    # Bernoulli(p): a=1 "recuerda", a=0 "olvida"
+    return p if a == 1 else (1 - p)
+
+
+def ps_rca(s, r, c, a):
+    # compuerta: si a=0 usa Base, si a=1 usa Monty
+    return ps_rM0(s, r) if a == 0 else ps_rcM1(s, r, c)
+
+
 def pEpisodio_DatosMa(Episodio, Datos):
     cT, sT, rT = Episodio
-    posterior_p = []
-    for pv in grid:
-        likelihood = 1.0
-        for (c,s,r) in Datos:
-            term = (1.0 - pv) * ps_rM0(s,r) + pv * ps_rcM1(s,r,c)
-            likelihood *= pr(r) * pc(c) * term
-        posterior_p.append(likelihood)
-    posterior_p = np.array(posterior_p)
-    if posterior_p.sum() == 0:
-        posterior_p = np.ones_like(posterior_p) / posterior_p.size #Normalizacion
+    p_grid = np.linspace(0.0, 1.0, 101)
+
+    if len(Datos) == 0:
+        post_p = np.ones_like(p_grid) / len(p_grid)
     else:
-        posterior_p = posterior_p / posterior_p.sum()
+        post_p = pp_Datos(Datos)
+
     total = 0.0
-    for pv, post in zip(grid, posterior_p):
-        term = (1.0 - pv) * ps_rM0(sT, rT) + pv * ps_rcM1(sT, rT, cT) #Al igual que como expliqué en la función anterior, adjudicamos cierto peso a cada modelo
-        total += term * pr(rT) * pc(cT) * post
+    for p, w in zip(p_grid, post_p):  # w = P(p | Datos previos)
+        for a in (0, 1):
+            total += pr(rT) * pc(cT) * ps_rca(sT, rT, cT, a) * pa_p(a, p) * w
+
     return total
 
-# 2.3
+# 2.3 
 
 def pDatos_M(Datos, m, log = False):
-    if m in (0,1):
+    if m in (0,1): 
         if log:
             suma_log = 0
             for (c, s_, r) in Datos:
@@ -244,46 +227,47 @@ def pDatos_M(Datos, m, log = False):
             for i in range(len(Datos)):
                 prod *= pEpisodio_DatosMa(Datos[i], Datos[:i])
             return prod
-
-# 2.4
+ 
+# 2.4 
 
 def log_Bayes_factor(log_pDatos_Mi,log_pDatos_Mj):
     return log_pDatos_Mi - log_pDatos_Mj
 
-# 2.5
+# 2.5 
 
-def geometric_mean(Datos, m, log = False):
+def geometric_mean(Datos, m, log=False):
     N = len(Datos)
-    if log:
-        sum_logs = 0
-        for i in range(N):
-            if m in (0, 1):
-                p = pEpisodio_M(*Datos[i], m)
-            elif m == 2:
-                p = pEpisodio_DatosMa(Datos[i], Datos[:i])
-            suma_logs += np.log(p)
-        return sum_logs / N
+    if N == 0:
+        raise ValueError("Datos está vacío")
+
+    sum_log10 = 0.0
+
+    if m in (0, 1):
+        for (c, s, r) in Datos:
+            p = prcs_M(r, c, s, m)
+            if p <= 0.0:
+                return (-np.inf if log else 0.0)
+            sum_log10 += np.log10(p)
+    elif m == 2:
+        prefijo = []
+        for epi in Datos:
+            p = pEpisodio_DatosMa(epi, prefijo)
+            if p <= 0.0:
+                return (-np.inf if log else 0.0)
+            sum_log10 += np.log10(p)
+            prefijo.append(epi)
     else:
-        prod = 1.0
-        for i in range(N):
-            if m in (0, 1):
-                p = pEpisodio_M(*Datos[i], m)
-            elif m == 2:
-                p = pEpisodio_DatosMa(Datos[i], Datos[:i])
-            prod *= p
-    return prod ** (1 / N)  # P(Datos|M)^(1/N) = (P(Datos|M1)*P(Datos|M2)*...*P(Datos|MN))^(1/N)
+        raise ValueError("m debe ser 0, 1 o 'MA'")
+
+    avg_log10 = sum_log10 / N
+    return (avg_log10 if log else 10**avg_log10)
 
 # 2.6
 
 def pM_Datos(m, Datos, log=False):
-    """
-    P(M=m | Datos) = P(Datos|M=m) P(M=m) / P(Datos)
-    Si log=True, devuelve el logaritmo del posterior.
-    """
     if m not in [0, 1, 2]:
         raise ValueError("Modelo debe ser 0, 1 o 2")
 
-    # Numerador
     if log:
         num = pDatos_M(Datos, m, log=True) + np.log(pM(m))
         den = np.log(sum(np.exp(pDatos_M(Datos, mm, log=True) + np.log(pM(mm)))
@@ -294,13 +278,12 @@ def pM_Datos(m, Datos, log=False):
         den = pDatos(Datos)
         return num / den if den > 0 else 0
 
+df = pd.read_csv("entregas/1-modelos/data/NoMontyHall.csv")
+DatosM2 = list(df.iloc[:60].itertuples(index=False, name=None))
 
-df = pd.read_csv("C:/Users/WildFi/Desktop/NoMontyHall.csv")
-Datos = list(df.iloc[:60].itertuples(index=False, name=None))
-
-pm0 = lista_pM_Datos(0, Datos)
-pm1 = lista_pM_Datos(1, Datos)
-pm2 = lista_pM_Datos(2, Datos)
+pm0 = lista_pM_Datos(0, DatosM2)
+pm1 = lista_pM_Datos(1, DatosM2)
+pm2 = lista_pM_Datos(2, DatosM2)
 
 plt.plot(pm0, label="M0: Base")
 plt.plot(pm1, label="M1: Monty Hall")
