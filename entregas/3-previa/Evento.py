@@ -46,23 +46,25 @@ class Evento(object):
 
     @property
     def diferencia_equipos(self):
+        # Diferencia de desempeños de los equipos
         ta, tb = self.desempeño_equipos
         d = ta - tb
         return d
-    #
 
     @property
     def marginal_diferencia(self):
-        # Aproximación
-        d_aprox = d > 0
+        # Marginal de la diferencia: distribución truncada (d > 0)
+        d = self.diferencia_equipos
+        d_aprox = d > 0   # usa __gt__ de Gaussian → truncnorm
         return d_aprox
-    #
 
     @property
     def likelihood_diferencia(self):
-        likelihood = d_aprox / d
+        # Likelihood = truncada / original
+        d = self.diferencia_equipos
+        d_aprox = self.marginal_diferencia
+        likelihood = d_aprox / d   # usa __truediv__ de Gaussian
         return likelihood
-    #
 
     @property
     def likelihood_equipos(self):
