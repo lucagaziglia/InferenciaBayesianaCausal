@@ -1,4 +1,5 @@
 # %%
+import scipy
 import ModeloLineal as ml
 
 from statsmodels.api import OLS  # Para selección de hipótesis
@@ -116,20 +117,18 @@ plt.legend(loc="upper left")
 plt.tight_layout()
 plt.show()
 
-# %% 1.4 intento mio
+# %% 1.4
 
 all_likelihoods = []
 
-for d in range(D):
-    models = []
+
+def log_likelihood(X, Y, d):
     phi_d = np.array(phi(X, d))
     loglikelihood = []
     for n in range(1, N):
         phi_n = phi_d[0:n]
         Y_n = Y[0:n]
         model_d = OLS(Y_n, phi_n).fit()
-        models.append(model_d)
-
         x = phi_d[n]
         y = Y[n]
 
@@ -138,10 +137,12 @@ for d in range(D):
                                         model_d.normalized_cov_params @ x.T)
         loglike = -0.5*np.log(2*np.pi*V) - 0.5*((y - y_hat)**2 / V)
         loglikelihood.append(loglike)
+    return loglikelihood
 
-    all_likelihoods.append(np.array(loglikelihood))
 
-    print(f"grado {d}, loglike: {all_likelihoods[d]}")
+for d in range(D):
+    log_like = log_likelihood(X, Y, d)
+    all_likelihoods.append(np.array(log_like))
 
 rendimiento_modelos = {}
 
@@ -162,6 +163,23 @@ plt.show()
 
 
 # %% 1.5
+p_M = 0.1  # Prior uniforme
+posteriors = {}
+for d in range(D):
+    evidencia = ml.log_evidence(Y, phi(X, d))[0][0]
+    likelihood = np.nansum(log_likelihood(X, Y, d))
+    posterior = likelihood*p_M / evidencia
+    posteriors[d] = posterior
+posteriors_df = pd.DataFrame.from_dict(
+    posteriors, orient='index', columns=['posterior'])
+
+plt.figure(figsize=(6, 4))
+plt.bar(posteriors_df.index, np.exp(posteriors_df.posterior -
+        np.max(posteriors_df.posterior)), color=plt.cm.tab10.colors)
+plt.xlabel("Modelos (grado del polinomio)")
+plt.ylabel("Posterior (escala relativa)")
+plt.title("Posterior por modelo")
+plt.show()
 
 
 # %%
