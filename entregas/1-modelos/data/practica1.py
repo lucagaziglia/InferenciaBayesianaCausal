@@ -1,26 +1,27 @@
-<<<<<<< HEAD
-=======
+import inspect
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib
+import math
+import numpy as np
+<< << << < HEAD
+== == == =
 # -*- coding: utf-8 -*-
 
 
->>>>>>> 1fcb8ddc847d43da139dc2858bf4713120940f0c
-import numpy as np
-import math
-import matplotlib
-import matplotlib.pyplot as plt
-import pandas as pd
-import inspect
+>>>>>> > 1fcb8ddc847d43da139dc2858bf4713120940f0c
 
-<<<<<<< HEAD
+<< << << < HEAD
 H = np.arange(3)  # Posibles valores de las hipótesis
-=======
-H = np.arange(3) # Posibles valores de las hipótesis
->>>>>>> 1fcb8ddc847d43da139dc2858bf4713120940f0c
+== == == =
+H = np.arange(3)  # Posibles valores de las hipótesis
+>>>>>> > 1fcb8ddc847d43da139dc2858bf4713120940f0c
 # Como estamos trabajando en python vamos empezar con 0
 # Es decir, la posición del regalo r \in {0,1,2} y de
 # la misma forma con el resto de las variables.
 
-<<<<<<< HEAD
+<< << << < HEAD
+
 
 def pr(r):  # P(r)
     if r not in H:
@@ -185,96 +186,108 @@ return NotImplementedError(f"La función {inspect.currentframe().f_code.co_name}
 # 2.6
 
 # actualizar pM_Datos(m,Datos) para que soporte al modelo alternativo
-=======
-def pr(r): # P(r)
+
+
+def pr(r):  # P(r)
     if r not in H:
-      raise ValueError("El regalo puede estar en la caja 0, 1 o 2")
+        raise ValueError("El regalo puede estar en la caja 0, 1 o 2")
     return 1/3
 
-def pc(c): # P(c)
+
+def pc(c):  # P(c)
     if c not in H:
-      raise ValueError("La caja a abrir debe ser 0, 1 o 2")
+        raise ValueError("La caja a abrir debe ser 0, 1 o 2")
     return 1/3
 
 ######
 
-def ps_rM0(s,r): # P(s|r,M=0)
+
+def ps_rM0(s, r):  # P(s|r,M=0)
     if s not in H or r not in H:
-      raise ValueError("La caja a abrir debe ser 0, 1 o 2")
-    if s == r: 
-      return 0 
+        raise ValueError("La caja a abrir debe ser 0, 1 o 2")
+    if s == r:
+        return 0
     else:
-      return 1/2
-    
-def ps_rcM1(s,r,c): # P(s|r,c,M=1)
+        return 1/2
+
+
+def ps_rcM1(s, r, c):  # P(s|r,c,M=1)
     if s not in H or r not in H or c not in H:
-      raise ValueError("s,r y c deben ser 0, 1 o 2")
+        raise ValueError("s,r y c deben ser 0, 1 o 2")
     if s == c or s == r:
-      return 0
+        return 0
     cajas_disponibles = [x for x in H if x != c and x != r]
     return 1 / len(cajas_disponibles)
 
 #####
 
-def prcs_M(r,c,s,m): # P(r,c,s|M)
+
+def prcs_M(r, c, s, m):  # P(r,c,s|M)
     # producto de las condicionales
     if s not in H or r not in H or c not in H:
-      raise ValueError("s,r y c deben ser 0, 1 o 2")
-    if m not in [0,1]:
-      raise ValueError("m debe ser 0 o 1")
-    return pr(r) * pc(c) * (ps_rM0(s,r) if m == 0 else ps_rcM1(s,r,c))
+        raise ValueError("s,r y c deben ser 0, 1 o 2")
+    if m not in [0, 1]:
+        raise ValueError("m debe ser 0 o 1")
+    return pr(r) * pc(c) * (ps_rM0(s, r) if m == 0 else ps_rcM1(s, r, c))
 
-def ps_cM(s,c,m):
+
+def ps_cM(s, c, m):
     # Predicción del segundo dato dado el primero
     if s not in H or c not in H:
-      raise ValueError("s y c deben ser 0, 1 o 2")
-    num = sum(prcs_M(r,c,s,m) for r in H) # P(s,c|M) = sum_r P(r,c,s|M)
-    den = sum(prcs_M(r,c,o,m) for r in H for o in H) # P(c|M) = sum_{rs} P(r,c,s|M)
+        raise ValueError("s y c deben ser 0, 1 o 2")
+    num = sum(prcs_M(r, c, s, m) for r in H)  # P(s,c|M) = sum_r P(r,c,s|M)
+    den = sum(prcs_M(r, c, o, m)
+              for r in H for o in H)  # P(c|M) = sum_{rs} P(r,c,s|M)
     if den == 0:
-      raise ZeroDivisionError("P(c|M) es 0")
-    res = num / den # P(s|c,M) = P(s,c|M)/P(c|M)
+        raise ZeroDivisionError("P(c|M) es 0")
+    res = num / den  # P(s|c,M) = P(s,c|M)/P(c|M)
     return res
 
-def pr_csM(r,c,s,m):
-    num = prcs_M(r,c,s,m) # p(r,c,s|M)
-    den = sum(prcs_M(r,c,s,m) for r in H) # p(c,s|M) = sum_r P(r,c,s|M)
+
+def pr_csM(r, c, s, m):
+    num = prcs_M(r, c, s, m)  # p(r,c,s|M)
+    den = sum(prcs_M(r, c, s, m) for r in H)  # p(c,s|M) = sum_r P(r,c,s|M)
     if den == 0:
-      raise ZeroDivisionError("p(c,s|M) es 0")
-    res = num / den # P(r|c,s,M) = P(r,c,s|M)/p(c,s|M)
+        raise ZeroDivisionError("p(c,s|M) es 0")
+    res = num / den  # P(r|c,s,M) = P(r,c,s|M)/p(c,s|M)
     return res
 
-def pEpisodio_M(c,s,r,m): # P(Datos = (c,s,r) | M)
+
+def pEpisodio_M(c, s, r, m):  # P(Datos = (c,s,r) | M)
     # Predicción del conjunto de datos P(c,s,r|M)
-    if m not in [0,1]:
+    if m not in [0, 1]:
         raise ValueError("m debe ser 0 o 1")
     if s not in H or r not in H or c not in H:
         raise ValueError("s,r,c deben ser 0,1,2")
-    return prcs_M(r,c,s,m)
+    return prcs_M(r, c, s, m)
 
-def simular(T=16,seed=0):
+
+def simular(T=16, seed=0):
     import pandas as pd
     np.random.seed(seed)
     Datos = []
     for t in range(T):
-        r = np.random.choice(3, p=[pr(hr) for hr in H]) # regalo
-        c = np.random.choice(3, p=[pc(hc) for hc in H]) # elegida
-        s = np.random.choice(3, p=[ps_rcM1(s_,r,c) for s_ in H]) # señalada
-        Datos.append((c,s,r))
+        r = np.random.choice(3, p=[pr(hr) for hr in H])  # regalo
+        c = np.random.choice(3, p=[pc(hc) for hc in H])  # elegida
+        s = np.random.choice(3, p=[ps_rcM1(s_, r, c) for s_ in H])  # señalada
+        Datos.append((c, s, r))
     return Datos
 
 
 Datos = simular()
 
+
 def _secuencia_de_predicciones(Datos, m):
 
     return [pEpisodio_M(c, s, r, m) for (c, s, r) in Datos]
 
+
 def pDatos_M(Datos, m):
     preds = _secuencia_de_predicciones(Datos, m)
-    prod = 1.0 
-    for p in preds: 
+    prod = 1.0
+    for p in preds:
         prod *= p
-    return prod # P(Datos|M) = producto de las predicciones de cada episodio     
+    return prod  # P(Datos|M) = producto de las predicciones de cada episodio
 
 
 # 1.4 Calcular predicción de los datos P(Datos)
@@ -284,17 +297,19 @@ def pM(m):
         raise ValueError("Modelo debe ser 0 o 1")
     return 1/2
 
+
 def pDatos(Datos):
     pD = 0.0
-    for m in [0, 1, 2]: #Regla de la suma
+    for m in [0, 1, 2]:  # Regla de la suma
         try:
-            pD += pDatos_M(Datos, m) * pM(m) #Regla del producto
+            pD += pDatos_M(Datos, m) * pM(m)  # Regla del producto
         except ValueError:
             # pDatos_M todavía no soporta el modelo alternativo (el modelo correspondiente a m=2 antes de 2.x)
             continue
     return pD
 
 # 1.5 Posterior de los modelos
+
 
 def pM_Datos(m, Datos):
     denom = pDatos(Datos)
@@ -303,20 +318,23 @@ def pM_Datos(m, Datos):
     num = pDatos_M(Datos, m) * pM(m)
     return num / denom
 
+
 def lista_pM_Datos(m, Datos):
     posts = [pM(m)]  # prior en t=0
     for t in range(1, len(Datos) + 1):
         posts.append(pM_Datos(m, Datos[:t]))
     return posts
 
+
 plt.plot(lista_pM_Datos(0, Datos), label="M0: Base")
 plt.plot(lista_pM_Datos(1, Datos), label="M1: Monty Hall")
 plt.legend()
 plt.show()
 
-# 2.1 
+# 2.1
 
-def pM(m): #Redefino el prior porque ahora consideramos 3 modelos
+
+def pM(m):  # Redefino el prior porque ahora consideramos 3 modelos
     if m not in [0, 1, 2]:
         raise ValueError("Modelo debe ser 0 o 1")
     return 1/3
@@ -342,6 +360,7 @@ def pp_Datos(Datos):
     return num / den
 
 # 2.2
+
 
 def pa_p(a, p):
     # Bernoulli(p): a=1 "recuerda", a=0 "olvida"
@@ -369,24 +388,25 @@ def pEpisodio_DatosMa(Episodio, Datos):
 
     return total
 
-# 2.3 
+# 2.3
 
-def pDatos_M(Datos, m, log = False):
-    if m in (0,1): 
+
+def pDatos_M(Datos, m, log=False):
+    if m in (0, 1):
         if log:
             suma_log = 0
             for (c, s_, r) in Datos:
-                p = pEpisodio_M(c, s_, r, m) 
+                p = pEpisodio_M(c, s_, r, m)
                 if p <= 0:
                     return -np.inf
-                suma_log += np.log(p) 
+                suma_log += np.log(p)
             return suma_log
         else:
             prod = 1.0
             for (c, s_, r) in Datos:
                 prod *= pEpisodio_M(c, s_, r, m)
             return prod
-    elif m == 2: 
+    elif m == 2:
         if log:
             suma_log = 0
             for i in range(len(Datos)):
@@ -400,13 +420,15 @@ def pDatos_M(Datos, m, log = False):
             for i in range(len(Datos)):
                 prod *= pEpisodio_DatosMa(Datos[i], Datos[:i])
             return prod
- 
-# 2.4 
 
-def log_Bayes_factor(log_pDatos_Mi,log_pDatos_Mj):
+# 2.4
+
+
+def log_Bayes_factor(log_pDatos_Mi, log_pDatos_Mj):
     return log_pDatos_Mi - log_pDatos_Mj
 
-# 2.5 
+# 2.5
+
 
 def geometric_mean(Datos, m, log=False):
     N = len(Datos)
@@ -437,6 +459,7 @@ def geometric_mean(Datos, m, log=False):
 
 # 2.6
 
+
 def pM_Datos(m, Datos, log=False):
     if m not in [0, 1, 2]:
         raise ValueError("Modelo debe ser 0, 1 o 2")
@@ -450,6 +473,7 @@ def pM_Datos(m, Datos, log=False):
         num = pDatos_M(Datos, m) * pM(m)
         den = pDatos(Datos)
         return num / den if den > 0 else 0
+
 
 df = pd.read_csv("entregas/1-modelos/data/NoMontyHall.csv")
 DatosM2 = list(df.iloc[:60].itertuples(index=False, name=None))
@@ -467,4 +491,4 @@ plt.ylabel("P(Modelo | Datos)")
 plt.legend()
 plt.tight_layout()
 plt.show()
->>>>>>> 1fcb8ddc847d43da139dc2858bf4713120940f0c
+>>>>>> > 1fcb8ddc847d43da139dc2858bf4713120940f0c
