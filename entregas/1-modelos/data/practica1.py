@@ -491,4 +491,3 @@ plt.ylabel("P(Modelo | Datos)")
 plt.legend()
 plt.tight_layout()
 plt.show()
->>>>>> > 1fcb8ddc847d43da139dc2858bf4713120940f0c
