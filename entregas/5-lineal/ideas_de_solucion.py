@@ -214,56 +214,90 @@ plt.tight_layout()
 plt.show()
 
 print("6.b)")
-#%%
+
 x_val = -0.23
 distributions = {}
+
 for d in [0, 3, 9]:
-    phi_x = phi(np.array([[x_val]]), d).values        # (1, p_d)
-    mu = float(phi_x @ modelos_BAY[d]['mean'])        # escalar
-    var = (1.0 / BETA) + float(phi_x @ modelos_BAY[d]['cov'] @ phi_x.T)  # escalar
+    phi_x = phi(np.array([[x_val]]), d).values      
+    mu = float(phi_x @ modelos_BAY[d]['mean'])      
+    var = (1.0 / BETA) + float(phi_x @ modelos_BAY[d]['cov'] @ phi_x.T)  # Var[y* | ...]
     sigma = np.sqrt(var)
     distributions[d] = (mu, sigma)
 
-#%%
-x_val = -0.23
-
-distributions = {}
-for d, m in enumerate([0,3,9]):
-    phi_x_val = phi(np.array([[x_val]]), complejidad=d)
-    mu = phi_x_val.values.dot(modelos_BAY[d]['mean'])
-    sigma = np.sqrt(1/BETA + np.diag(phi_x_val.values @ modelos_BAY[d]['cov'] @ phi_x_val.values.T))
-    distributions[d] = (mu, sigma)
-
-from scipy.stats import norm
-
-plt.figure(figsize=(7,5))
-labels = {0:"Rígido (grado 0)", 3:"Simple (grado 3)", 9:"Complejo (grado 9)"}
+# Graficar densidades normales p(y | x=-0.23, M_d)
+plt.figure(figsize=(7, 5))
+labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)", 9: "Complejo (grado 9)"}
 
 for d, (mu, sigma) in distributions.items():
-    grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 300)
-    plt.plot(grid, norm.pdf(grid, loc=mu, scale=sigma), label=labels.get(d, f"Grado {d}"))
+    grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
+    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * np.exp(-0.5 * ((grid - mu)/sigma)**2)
+    plt.plot(grid, pdf, linewidth=2, label=labels[d])
 
 plt.xlabel(r"$y \mid x=-0.23$")
 plt.ylabel(r"$P(\text{Dato}\mid \text{Modelo } d)$")
+plt.title("Predicción en x = -0.23")
+plt.legend()
+plt.tight_layout()
+plt.show()
+#%%
+print("7)")
+
+x_val = 0.1
+y_true = np.sin(2*np.pi*x_val)
+
+distributions = {}
+
+for d in [0, 3, 9]:
+    phi_x = phi(np.array([[x_val]]), d).values
+    mu = float(phi_x @ modelos_BAY[d]['mean'])
+    # usar solo la parte de modelo: var = φ(x)^T Σ_d φ(x)
+    var = float((phi_x @ modelos_BAY[d]['cov'] @ phi_x.T).squeeze())
+    sigma = np.sqrt(var)
+    distributions[d] = (mu, sigma)
+
+# Graficar densidades normales p(y | x=0.1, M_d)
+plt.figure(figsize=(7, 5))
+labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)", 9: "Complejo (grado 9)"}
+for d, (mu, sigma) in distributions.items():
+    grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
+    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * np.exp(-0.5 * ((grid - mu)/sigma)**2)
+    plt.plot(grid, pdf, linewidth=2, label=labels[d])
+plt.axvline(x=y_true, color='k', linestyle='--', label='Valor real')
+plt.xlabel(r"$y \mid x=0.1$")
+plt.ylabel(r"$P(\text{Dato}\mid \text{Modelo } d)$")
+plt.title("Predicción en x = 0.1")
 plt.legend()
 plt.tight_layout()
 plt.show()
 
 #%%
+print("7)")
 
-for d, (mu, sigma) in distributions.items():
-    x = np.linspace(mu - 4*sigma, mu + 4*sigma, 200)
-    plt.plot(x, norm.pdf(x, mu, sigma), label=f'Modelo Bayesiano d={d}', alpha=0.7)
-plt.show()
-#%%
-plt.figure(figsize=(10, 6))
+x_val = 0.1
+y_true = np.sin(2*np.pi*x_val)
 
+distributions = {}
+
+for d in [0, 3, 9]:
+    phi_x = phi(np.array([[x_val]]), d).values      
+    mu = float(phi_x @ modelos_BAY[d]['mean'])      
+    var = (1.0 / BETA) + float(phi_x @ modelos_BAY[d]['cov'] @ phi_x.T)  # Var[y* | ...]
+    sigma = np.sqrt(var)
+    distributions[d] = (mu, sigma)
+
+# Graficar densidades normales p(y | x=0.1, M_d)
+plt.figure(figsize=(7, 5))
+labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)", 9: "Complejo (grado 9)"}
 for d, (mu, sigma) in distributions.items():
-    plt.plot(x_grid, mu, label=f'Modelo Bayesiano d={d}', alpha=0.7, linewidth=1)
-    plt.fill_between(x_grid.flatten(), mu - 2*sigma, mu + 2*sigma, alpha=0.2)
-plt.title('Predictivo con priori no informativo del 0 al 9')
-plt.ylim(-1.5, 1.5)
-plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
+    grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
+    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * np.exp(-0.5 * ((grid - mu)/sigma)**2)
+    plt.plot(grid, pdf, linewidth=2, label=labels[d])
+plt.axvline(x=y_true, color='k', linestyle='--', label='Valor real')
+plt.xlabel(r"$y \mid x=0.1$")
+plt.ylabel(r"$P(\text{Dato}\mid \text{Modelo } d)$")
+plt.title("Predicción en x = 0.1")
+plt.legend()
 plt.tight_layout()
 plt.show()
 
