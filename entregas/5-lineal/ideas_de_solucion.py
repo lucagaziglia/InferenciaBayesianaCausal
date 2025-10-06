@@ -271,37 +271,132 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
-#%%
-print("7)")
+#%% 2.1) 
 
-x_val = 0.1
-y_true = np.sin(2*np.pi*x_val)
+Alturas = pd.read_csv("datos/alturas.csv")
+Alturas.head()
 
-distributions = {}
+hombres = Alturas[Alturas.sexo == 'M']
+mujeres = Alturas[Alturas.sexo == 'F']
+plt.figure(figsize=(8, 5))
+plt.scatter(hombres.altura_madre, hombres.altura, c='blue', label='Hombres', alpha=0.6)
+plt.scatter(mujeres.altura_madre, mujeres.altura, c='red', label='Mujeres', alpha=0.6)
+plt.xlabel('Altura de la madre (cm)') 
+plt.ylabel('Altura del hijo/a (cm)')
+plt.title('Alturas de madres e hijos/as')
+plt.legend()
+plt.show()
 
-for d in [0, 3, 9]:
-    phi_x = phi(np.array([[x_val]]), d).values      
-    mu = float(phi_x @ modelos_BAY[d]['mean'])      
-    var = (1.0 / BETA) + float(phi_x @ modelos_BAY[d]['cov'] @ phi_x.T)  # Var[y* | ...]
-    sigma = np.sqrt(var)
-    distributions[d] = (mu, sigma)
+#%% 2.2)
 
-# Graficar densidades normales p(y | x=0.1, M_d)
-plt.figure(figsize=(7, 5))
-labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)", 9: "Complejo (grado 9)"}
-for d, (mu, sigma) in distributions.items():
-    grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
-    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * np.exp(-0.5 * ((grid - mu)/sigma)**2)
-    plt.plot(grid, pdf, linewidth=2, label=labels[d])
-plt.axvline(x=y_true, color='k', linestyle='--', label='Valor real')
-plt.xlabel(r"$y \mid x=0.1$")
-plt.ylabel(r"$P(\text{Dato}\mid \text{Modelo } d)$")
-plt.title("Predicción en x = 0.1")
+# Modelo base
+
+N, _ = Alturas.shape
+Y_alturas = Alturas.altura
+X_base = pd.DataFrame({"Base": [1 for _ in range(N)],    # Origen
+                       "Altura": Alturas.altura_madre,  # Pendiente
+                       })
+
+ml.log_evidence(Y_alturas, X_base)
+MU_base, COV_base = ml.posterior(Y_alturas, X_base)
+
+df_m = Alturas[Alturas.sexo == 'M']
+df_f = Alturas[Alturas.sexo == 'F']
+
+x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
+X_grid = pd.DataFrame({"Base": np.ones_like(x_grid), "Altura": x_grid})
+
+mu_pred_base = (X_grid.values @ MU_base).astype(float)
+
+# --- plot coloreado por sexo + modelo ---
+plt.figure(figsize=(7,5))
+plt.scatter(df_m.altura_madre, df_m.altura, s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
+plt.plot(x_grid, mu_pred_base, lw=2, label="Modelo base (media posterior)")
+plt.xlabel("Altura madre")
+plt.ylabel("Altura descendencia")
 plt.legend()
 plt.tight_layout()
 plt.show()
 
+#%%
 
+print("Modelo biológico")
+
+X_bio = pd.DataFrame({
+    "Base": np.ones(N),
+    "Altura": Alturas.altura_madre,
+    "Indicadora": Alturas.sexo.apply(lambda x: 1 if x == 'F' else 0)
+})
+
+MU_bio, COV_bio = ml.posterior(Y_alturas, X_bio)
+ml.log_evidence(Y_alturas, X_bio)
+
+# grids separados para H (0) y F (1)
+x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
+X_grid_bio_H = pd.DataFrame({"Base": np.ones_like(x_grid), "Altura": x_grid, "Indicadora": np.zeros_like(x_grid)})
+X_grid_bio_F = pd.DataFrame({"Base": np.ones_like(x_grid), "Altura": x_grid, "Indicadora": np.ones_like(x_grid)})
+
+mu_pred_bio_H = (X_grid_bio_H.values @ MU_bio).astype(float)
+mu_pred_bio_F = (X_grid_bio_F.values @ MU_bio).astype(float)
+
+# --- plot coloreado por sexo + líneas del modelo biológico ---
+plt.figure(figsize=(7,5))
+plt.scatter(df_m.altura_madre, df_m.altura, s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
+plt.plot(x_grid, mu_pred_bio_H, lw=2.5, label="Modelo biológico (H)")
+plt.plot(x_grid, mu_pred_bio_F, lw=2.5, label="Modelo biológico (F)")
+plt.xlabel("Altura madre")
+plt.ylabel("Altura descendencia")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+#%%
+# === Modelo identitario (25 rectas iguales en transparencia) ===
+
+N = len(Alturas)
+y = Alturas["altura"].values
+x = Alturas["altura_madre"].values
+
+# Grupos de 2 personas
+G = (np.arange(N) % (N // 2)).astype(int)
+num_grupos = N // 2
+
+# Matriz de diseño: pendiente común + intercepto por grupo
+X_ident = pd.DataFrame({"Altura": x})
+X_ident = pd.concat([X_ident, pd.get_dummies(G, prefix="G", dtype=int)], axis=1)
+
+# Ajuste bayesiano
+MU_ident, COV_ident = ml.posterior(y, X_ident)
+
+# Extraer coeficientes
+coef = pd.Series(MU_ident, index=X_ident.columns)
+slope = float(coef["Altura"])
+intercepts = coef.filter(like="G_")
+
+# Grid para graficar
+x_grid = np.linspace(x.min(), x.max(), 200)
+
+# Separar por sexo para colorear puntos
+df_m = Alturas[Alturas["sexo"] == "M"]
+df_f = Alturas[Alturas["sexo"] == "F"]
+
+plt.figure(figsize=(8,5))
+plt.scatter(df_m["altura_madre"], df_m["altura"], s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f["altura_madre"], df_f["altura"], s=16, alpha=0.7, label="Mujeres")
+
+# Dibujar TODAS las rectas del modelo identitario con transparencia
+for b_g in intercepts:
+    y_grid = slope * x_grid + float(b_g)
+    plt.plot(x_grid, y_grid, color="tab:gray", alpha=0.3, linewidth=1)
+
+plt.xlabel("Altura madre")
+plt.ylabel("Altura descendencia")
+plt.title("Modelo identitario: 25 rectas paralelas (misma pendiente)")
+plt.legend(loc="best")
+plt.tight_layout()
+plt.show()
 # %%
 #
 # 3.1 Data
