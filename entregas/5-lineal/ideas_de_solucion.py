@@ -2,6 +2,7 @@
 import scipy
 import ModeloLineal as ml
 
+
 from statsmodels.api import OLS  # Para selección de hipótesis
 from scipy.stats import norm    # La distribución gaussiana
 import pandas as pd
@@ -297,7 +298,7 @@ X_base = pd.DataFrame({"Base": [1 for _ in range(N)],    # Origen
                        "Altura": Alturas.altura_madre,  # Pendiente
                        })
 
-ml.log_evidence(Y_alturas, X_base)
+log_evidence_base = ml.log_evidence(Y_alturas, X_base)
 MU_base, COV_base = ml.posterior(Y_alturas, X_base)
 
 df_m = Alturas[Alturas.sexo == 'M']
@@ -330,7 +331,7 @@ X_bio = pd.DataFrame({
 })
 
 MU_bio, COV_bio = ml.posterior(Y_alturas, X_bio)
-ml.log_evidence(Y_alturas, X_bio)
+log_evidence_bio = ml.log_evidence(Y_alturas, X_bio)
 
 # grids separados para H (0) y F (1)
 x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
@@ -353,50 +354,99 @@ plt.tight_layout()
 plt.show()
 
 #%%
-# === Modelo identitario (25 rectas iguales en transparencia) ===
+print("Modelo identitario")
 
-N = len(Alturas)
-y = Alturas["altura"].values
-x = Alturas["altura_madre"].values
+X_id = pd.DataFrame({
+    "Base": np.ones(N),
+    "Altura": Alturas.altura_madre,
+})
 
-# Grupos de 2 personas
-G = (np.arange(N) % (N // 2)).astype(int)
-num_grupos = N // 2
+indices = np.arange(N)
+np.random.shuffle(indices)  
+# Dividimos en grupos de 2
+grupos = np.array_split(indices, 25)
 
-# Matriz de diseño: pendiente común + intercepto por grupo
-X_ident = pd.DataFrame({"Altura": x})
-X_ident = pd.concat([X_ident, pd.get_dummies(G, prefix="G", dtype=int)], axis=1)
+# Creamos columnas dummy
+for i, grupo in enumerate(grupos):
+    col = np.zeros(N)
+    col[grupo] = 1
+    X_id[f"G{i+1}"] = col
 
-# Ajuste bayesiano
-MU_ident, COV_ident = ml.posterior(y, X_ident)
 
-# Extraer coeficientes
-coef = pd.Series(MU_ident, index=X_ident.columns)
-slope = float(coef["Altura"])
-intercepts = coef.filter(like="G_")
+MU_id, COV_id = ml.posterior(Y_alturas, X_id)
+log_evidence_id = ml.log_evidence(Y_alturas, X_id)
 
-# Grid para graficar
-x_grid = np.linspace(x.min(), x.max(), 200)
+x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
 
-# Separar por sexo para colorear puntos
-df_m = Alturas[Alturas["sexo"] == "M"]
-df_f = Alturas[Alturas["sexo"] == "F"]
+n_grupos = 25
+cols = ["Base", "Altura"] + [f"G{i+1}" for i in range(n_grupos)]
 
-plt.figure(figsize=(8,5))
-plt.scatter(df_m["altura_madre"], df_m["altura"], s=16, alpha=0.7, label="Hombres")
-plt.scatter(df_f["altura_madre"], df_f["altura"], s=16, alpha=0.7, label="Mujeres")
+X_grids = []
+for g in range(n_grupos):
+    df = pd.DataFrame(0.0, index=np.arange(len(x_grid)), columns=cols)
+    df["Base"] = 1.0
+    df["Altura"] = x_grid
+    df[f"G{g+1}"] = 1.0
+    X_grids.append(df.values)
 
-# Dibujar TODAS las rectas del modelo identitario con transparencia
-for b_g in intercepts:
-    y_grid = slope * x_grid + float(b_g)
-    plt.plot(x_grid, y_grid, color="tab:gray", alpha=0.3, linewidth=1)
+X_stack = np.vstack(X_grids)
+mu_pred_por_grupo = (X_stack @ MU_id).astype(float).reshape(n_grupos, -1)
 
+# --- plot coloreado por sexo + líneas del modelo identitario ---
+plt.figure(figsize=(7,5))
+plt.scatter(df_m.altura_madre, df_m.altura, s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
+for g in range(n_grupos):
+    plt.plot(x_grid, mu_pred_por_grupo[g], lw=1, alpha=0.4, label=f"Grupo {g+1}" if g < 1 else "")
 plt.xlabel("Altura madre")
 plt.ylabel("Altura descendencia")
-plt.title("Modelo identitario: 25 rectas paralelas (misma pendiente)")
-plt.legend(loc="best")
+plt.legend()
 plt.tight_layout()
 plt.show()
+
+#%% 2.3)
+print("Comparación de modelos (log-evidencia)")
+
+df_log_evidences = pd.DataFrame({
+    "Base": [log_evidence_base],
+    "Biológico": [log_evidence_bio],
+    "Identitario": [log_evidence_id]})
+
+plt.figure(figsize=(6,4))
+plt.bar(df_log_evidences.columns, df_log_evidences.iloc[0], color=plt.cm.tab10.colors)
+plt.ylabel("Log-evidencia")
+plt.title("Comparación de modelos")
+plt.tight_layout()
+plt.show()
+
+
+#%% 2.5)
+
+print("Posterior de los modelos")
+
+import numpy as np
+
+# log evidences (en log natural)
+log_evidences = df_log_evidences.iloc[0].values
+# prior uniforme
+# prior uniforme: 1/3  --> en log:
+log_prior = np.log(1/3)
+
+# numerador en log para cada modelo: log P(D|M_i) + log P(M_i)
+z = log_evidences + log_prior
+
+# denominador en log: log P(D) con log-sum-exp
+max_z = np.max(z)
+log_PDatos = max_z + np.log(np.sum(np.exp(z - max_z)))
+
+# posterior en log y en probas
+log_posteriors = z - log_PDatos
+posteriors = np.exp(log_posteriors)
+
+print("Posteriores (Base, Bio, ID):", posteriors)
+#%%
+log_evidence_base
+
 # %%
 #
 # 3.1 Data
