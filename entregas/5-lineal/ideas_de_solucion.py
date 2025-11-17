@@ -2,6 +2,7 @@
 import scipy
 import ModeloLineal as ml
 
+
 from statsmodels.api import OLS  # Para selección de hipótesis
 from scipy.stats import norm    # La distribución gaussiana
 import pandas as pd
@@ -279,14 +280,28 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
+<<<<<<< HEAD
 # %%
 print("7)")
+=======
+#%% 2.1) 
+>>>>>>> d9815ad4f87517116fb4f8fb6917f747c3a56894
 
-x_val = 0.1
-y_true = np.sin(2*np.pi*x_val)
+Alturas = pd.read_csv("datos/alturas.csv")
+Alturas.head()
 
-distributions = {}
+hombres = Alturas[Alturas.sexo == 'M']
+mujeres = Alturas[Alturas.sexo == 'F']
+plt.figure(figsize=(8, 5))
+plt.scatter(hombres.altura_madre, hombres.altura, c='blue', label='Hombres', alpha=0.6)
+plt.scatter(mujeres.altura_madre, mujeres.altura, c='red', label='Mujeres', alpha=0.6)
+plt.xlabel('Altura de la madre (cm)') 
+plt.ylabel('Altura del hijo/a (cm)')
+plt.title('Alturas de madres e hijos/as')
+plt.legend()
+plt.show()
 
+<<<<<<< HEAD
 for d in [0, 3, 9]:
     phi_x = phi(np.array([[x_val]]), d).values
     mu = float(phi_x @ modelos_BAY[d]['mean'])
@@ -309,10 +324,41 @@ plt.axvline(x=y_true, color='k', linestyle='--', label='Valor real')
 plt.xlabel(r"$y \mid x=0.1$")
 plt.ylabel(r"$P(\text{Dato}\mid \text{Modelo } d)$")
 plt.title("Predicción en x = 0.1")
+=======
+#%% 2.2)
+
+# Modelo base
+
+N, _ = Alturas.shape
+Y_alturas = Alturas.altura
+X_base = pd.DataFrame({"Base": [1 for _ in range(N)],    # Origen
+                       "Altura": Alturas.altura_madre,  # Pendiente
+                       })
+
+log_evidence_base = ml.log_evidence(Y_alturas, X_base)
+MU_base, COV_base = ml.posterior(Y_alturas, X_base)
+
+df_m = Alturas[Alturas.sexo == 'M']
+df_f = Alturas[Alturas.sexo == 'F']
+
+x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
+X_grid = pd.DataFrame({"Base": np.ones_like(x_grid), "Altura": x_grid})
+
+mu_pred_base = (X_grid.values @ MU_base).astype(float)
+
+# --- plot coloreado por sexo + modelo ---
+plt.figure(figsize=(7,5))
+plt.scatter(df_m.altura_madre, df_m.altura, s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
+plt.plot(x_grid, mu_pred_base, lw=2, label="Modelo base (media posterior)")
+plt.xlabel("Altura madre")
+plt.ylabel("Altura descendencia")
+>>>>>>> d9815ad4f87517116fb4f8fb6917f747c3a56894
 plt.legend()
 plt.tight_layout()
 plt.show()
 
+<<<<<<< HEAD
 # %% [markdown]
 # # Ejercicio 2
 # ### Efecto causal del sexo biol ́ogico sobre la altura.
@@ -352,6 +398,134 @@ for d in range(D):
     modelos_BAY.append({"mean": MU_d.reshape(
         1, d+1)[0], "cov": COV_d, "log_evidence": log_evidence_d})
 
+=======
+#%%
+
+print("Modelo biológico")
+
+X_bio = pd.DataFrame({
+    "Base": np.ones(N),
+    "Altura": Alturas.altura_madre,
+    "Indicadora": Alturas.sexo.apply(lambda x: 1 if x == 'F' else 0)
+})
+
+MU_bio, COV_bio = ml.posterior(Y_alturas, X_bio)
+log_evidence_bio = ml.log_evidence(Y_alturas, X_bio)
+
+# grids separados para H (0) y F (1)
+x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
+X_grid_bio_H = pd.DataFrame({"Base": np.ones_like(x_grid), "Altura": x_grid, "Indicadora": np.zeros_like(x_grid)})
+X_grid_bio_F = pd.DataFrame({"Base": np.ones_like(x_grid), "Altura": x_grid, "Indicadora": np.ones_like(x_grid)})
+
+mu_pred_bio_H = (X_grid_bio_H.values @ MU_bio).astype(float)
+mu_pred_bio_F = (X_grid_bio_F.values @ MU_bio).astype(float)
+
+# --- plot coloreado por sexo + líneas del modelo biológico ---
+plt.figure(figsize=(7,5))
+plt.scatter(df_m.altura_madre, df_m.altura, s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
+plt.plot(x_grid, mu_pred_bio_H, lw=2.5, label="Modelo biológico (H)")
+plt.plot(x_grid, mu_pred_bio_F, lw=2.5, label="Modelo biológico (F)")
+plt.xlabel("Altura madre")
+plt.ylabel("Altura descendencia")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+#%%
+print("Modelo identitario")
+
+X_id = pd.DataFrame({
+    "Base": np.ones(N),
+    "Altura": Alturas.altura_madre,
+})
+
+indices = np.arange(N)
+np.random.shuffle(indices)  
+# Dividimos en grupos de 2
+grupos = np.array_split(indices, 25)
+
+# Creamos columnas dummy
+for i, grupo in enumerate(grupos):
+    col = np.zeros(N)
+    col[grupo] = 1
+    X_id[f"G{i+1}"] = col
+
+
+MU_id, COV_id = ml.posterior(Y_alturas, X_id)
+log_evidence_id = ml.log_evidence(Y_alturas, X_id)
+
+x_grid = np.linspace(Alturas.altura_madre.min(), Alturas.altura_madre.max(), 200)
+
+n_grupos = 25
+cols = ["Base", "Altura"] + [f"G{i+1}" for i in range(n_grupos)]
+
+X_grids = []
+for g in range(n_grupos):
+    df = pd.DataFrame(0.0, index=np.arange(len(x_grid)), columns=cols)
+    df["Base"] = 1.0
+    df["Altura"] = x_grid
+    df[f"G{g+1}"] = 1.0
+    X_grids.append(df.values)
+
+X_stack = np.vstack(X_grids)
+mu_pred_por_grupo = (X_stack @ MU_id).astype(float).reshape(n_grupos, -1)
+
+# --- plot coloreado por sexo + líneas del modelo identitario ---
+plt.figure(figsize=(7,5))
+plt.scatter(df_m.altura_madre, df_m.altura, s=16, alpha=0.7, label="Hombres")
+plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
+for g in range(n_grupos):
+    plt.plot(x_grid, mu_pred_por_grupo[g], lw=1, alpha=0.4, label=f"Grupo {g+1}" if g < 1 else "")
+plt.xlabel("Altura madre")
+plt.ylabel("Altura descendencia")
+plt.legend()
+plt.tight_layout()
+plt.show()
+
+#%% 2.3)
+print("Comparación de modelos (log-evidencia)")
+
+df_log_evidences = pd.DataFrame({
+    "Base": [log_evidence_base],
+    "Biológico": [log_evidence_bio],
+    "Identitario": [log_evidence_id]})
+
+plt.figure(figsize=(6,4))
+plt.bar(df_log_evidences.columns, df_log_evidences.iloc[0], color=plt.cm.tab10.colors)
+plt.ylabel("Log-evidencia")
+plt.title("Comparación de modelos")
+plt.tight_layout()
+plt.show()
+
+
+#%% 2.5)
+
+print("Posterior de los modelos")
+
+import numpy as np
+
+# log evidences (en log natural)
+log_evidences = df_log_evidences.iloc[0].values
+# prior uniforme
+# prior uniforme: 1/3  --> en log:
+log_prior = np.log(1/3)
+
+# numerador en log para cada modelo: log P(D|M_i) + log P(M_i)
+z = log_evidences + log_prior
+
+# denominador en log: log P(D) con log-sum-exp
+max_z = np.max(z)
+log_PDatos = max_z + np.log(np.sum(np.exp(z - max_z)))
+
+# posterior en log y en probas
+log_posteriors = z - log_PDatos
+posteriors = np.exp(log_posteriors)
+
+print("Posteriores (Base, Bio, ID):", posteriors)
+#%%
+log_evidence_base
+>>>>>>> d9815ad4f87517116fb4f8fb6917f747c3a56894
 
 # %%
 #
