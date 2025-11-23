@@ -1,0 +1,5 @@
+digraph test {
+	A [label="¡Hola!"]
+	B [label="Graphviz funciona"]
+	A -> B
+}

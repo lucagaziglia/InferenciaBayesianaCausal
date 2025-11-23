@@ -1,0 +1,64 @@
+
+digraph {
+
+    // Nodos observables
+    sector;
+    antiguedad;
+    otro_mes_ano;
+    compras_pasadas;
+    nivel_riesgo;
+    plazo;
+    monto_credito;
+    ventas;
+
+    // Nodos latentes (no observados)
+    U_compras_pasadas;
+    U_nivel_riesgo;
+    U_plazo;
+    U_monto_credito;
+    U_ventas;
+
+    // ---- Flechas tal como en el dibujo ----
+    // “Variables de contexto” (sector, antigüedad, otro_mes_ano)
+    // apuntan a casi todo: compras, riesgo, plazo, monto y ventas
+
+    sector       -> compras_pasadas;
+    sector       -> nivel_riesgo;
+    sector       -> plazo;
+    sector       -> monto_credito;
+    sector       -> ventas;
+
+    antiguedad   -> compras_pasadas;
+    antiguedad   -> nivel_riesgo;
+    antiguedad   -> plazo;
+    antiguedad   -> monto_credito;
+    antiguedad   -> ventas;
+
+    otro_mes_ano -> compras_pasadas;
+    otro_mes_ano -> nivel_riesgo;
+    otro_mes_ano -> plazo;
+    otro_mes_ano -> monto_credito;
+    otro_mes_ano -> ventas;
+
+    // Bloque “derecha” tal como lo dibujaste
+    compras_pasadas -> nivel_riesgo;
+    compras_pasadas -> monto_credito;
+    compras_pasadas -> ventas;
+
+    nivel_riesgo    -> plazo;
+    nivel_riesgo    -> monto_credito;
+    nivel_riesgo    -> ventas;
+
+    plazo           -> monto_credito;
+    plazo           -> ventas;
+
+    // Efecto que queremos estimar
+    monto_credito   -> ventas;
+
+    // ---- Padres latentes (U) para cada variable endógena ----
+    U_compras_pasadas -> compras_pasadas;
+    U_nivel_riesgo    -> nivel_riesgo;
+    U_plazo           -> plazo;
+    U_monto_credito   -> monto_credito;
+    U_ventas          -> ventas;
+}
