@@ -436,3 +436,8 @@ respuestas[(23, "Tragedia de los comunes")] = [
     0.1,  # 2. Es indistinto
     " Para este caso se pueden aplicar muchos casos similares. Uno de ellos es por ejemplo que todo un barrio pague para la limpieza del barrio, si uno deja de aportar, seguimos disfrutando del beneficio ya que hay otros que siguen pagando. A su vez me estoy ahorrando el dinero por no pagar el servicio. Este comportamiento hace que si todos toman esta decisión el sistema colectivo deja de funcionar. Pero en terminos monetarios unicamente, claramente conviene mas dejar de aportar al fondo común y seguir recibiendo la cuota en partes iguales del fondo común y seguir recibiendo la parte correspondiente.",
 ]
+
+# %%
+
+respuestas
+# %%

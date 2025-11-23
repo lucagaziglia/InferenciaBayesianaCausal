@@ -77,7 +77,7 @@ plt.show()
 # %% 1.3 Graficar la función ajustada por los modelos de grado 0 a 9
 print("a) Ajuste de modelos polinomiales de grado 0 a 9")
 
-plt.figure(figsize=(8, 5))
+plt.figure(figsize=(12, 5))
 
 # Datos originales
 plt.scatter(X, Y, c="red", label="Datos con ruido")
@@ -107,11 +107,11 @@ plt.figure(figsize=(8, 5))
 plt.scatter(X, Y, c="red", label="Datos con ruido")
 plt.plot(x_grid, y_true, "k--", label="Función objetivo: sin(2πx)")
 plt.plot(x_grid, y_pred,
-         label="modelo de grado {mod_max_verosimilitud}", alpha=0.8)
+         label=f"modelo de grado {mod_max_verosimilitud}", alpha=0.8)
 
 plt.ylim(-1.5, 1.5)
 plt.title(
-    "Ajuste del modelo seleccionado por máxima verosimilitud (grado {mod_max_verosimilitud})")
+    f"Ajuste del modelo seleccionado por máxima verosimilitud (grado {mod_max_verosimilitud})")
 plt.xlabel("x")
 plt.ylabel("y")
 plt.legend(loc="upper left")
@@ -167,7 +167,8 @@ plt.show()
 p_M = 0.1
 posteriors = {}
 
-denominador = np.nansum([np.exp(ml.log_evidence(Y, phi(X, d))[0][0]) * p_M for d in range(D)])
+denominador = np.nansum(
+    [np.exp(ml.log_evidence(Y, phi(X, d))[0][0]) * p_M for d in range(D)])
 
 for d in range(D):
     evidencia = np.exp(ml.log_evidence(Y, phi(X, d))[0][0])
@@ -185,7 +186,7 @@ plt.ylabel("Posterior (escala relativa)")
 plt.title("Posterior por modelo")
 plt.show()
 
-#%% 1.6
+# %% 1.6
 
 modelos_OLS[1].params  # Las hipótesis seleccionadas
 # El likelihood de la hipótesis seleccionada (en escala log).
@@ -207,7 +208,8 @@ plt.scatter(X, Y, label='datos', zorder=5)
 for d, m in enumerate(modelos_BAY):
     phi_d = phi(x_grid, d)
     y_hat = phi_d.values.dot(m['mean'])
-    plt.plot(x_grid, y_hat, label=f'Modelo Bayesiano d={d}', alpha=0.7, linewidth=1)
+    plt.plot(x_grid, y_hat,
+             label=f'Modelo Bayesiano d={d}', alpha=0.7, linewidth=1)
 plt.title('Media del posterior con priori no informativo del 0 al 9')
 plt.ylim(-1.5, 1.5)
 plt.legend(bbox_to_anchor=(1.02, 1), loc='upper left')
@@ -220,19 +222,23 @@ x_val = -0.23
 distributions = {}
 
 for d in [0, 3, 9]:
-    phi_x = phi(np.array([[x_val]]), d).values      
-    mu = float(phi_x @ modelos_BAY[d]['mean'])      
-    var = (1.0 / BETA) + float(phi_x @ modelos_BAY[d]['cov'] @ phi_x.T)  # Var[y* | ...]
+    phi_x = phi(np.array([[x_val]]), d).values
+    mu = float(phi_x @ modelos_BAY[d]['mean'])
+    var = (1.0 / BETA) + float(phi_x @
+                               # Var[y* | ...]
+                               modelos_BAY[d]['cov'] @ phi_x.T)
     sigma = np.sqrt(var)
     distributions[d] = (mu, sigma)
 
 # Graficar densidades normales p(y | x=-0.23, M_d)
 plt.figure(figsize=(7, 5))
-labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)", 9: "Complejo (grado 9)"}
+labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)",
+          9: "Complejo (grado 9)"}
 
 for d, (mu, sigma) in distributions.items():
     grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
-    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * np.exp(-0.5 * ((grid - mu)/sigma)**2)
+    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * \
+        np.exp(-0.5 * ((grid - mu)/sigma)**2)
     plt.plot(grid, pdf, linewidth=2, label=labels[d])
 
 plt.xlabel(r"$y \mid x=-0.23$")
@@ -241,7 +247,7 @@ plt.title("Predicción en x = -0.23")
 plt.legend()
 plt.tight_layout()
 plt.show()
-#%%
+# %%
 print("7)")
 
 x_val = 0.1
@@ -259,10 +265,12 @@ for d in [0, 3, 9]:
 
 # Graficar densidades normales p(y | x=0.1, M_d)
 plt.figure(figsize=(7, 5))
-labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)", 9: "Complejo (grado 9)"}
+labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)",
+          9: "Complejo (grado 9)"}
 for d, (mu, sigma) in distributions.items():
     grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
-    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * np.exp(-0.5 * ((grid - mu)/sigma)**2)
+    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * \
+        np.exp(-0.5 * ((grid - mu)/sigma)**2)
     plt.plot(grid, pdf, linewidth=2, label=labels[d])
 plt.axvline(x=y_true, color='k', linestyle='--', label='Valor real')
 plt.xlabel(r"$y \mid x=0.1$")
@@ -272,7 +280,12 @@ plt.legend()
 plt.tight_layout()
 plt.show()
 
+<<<<<<< HEAD
+# %%
+print("7)")
+=======
 #%% 2.1) 
+>>>>>>> d9815ad4f87517116fb4f8fb6917f747c3a56894
 
 Alturas = pd.read_csv("datos/alturas.csv")
 Alturas.head()
@@ -288,6 +301,30 @@ plt.title('Alturas de madres e hijos/as')
 plt.legend()
 plt.show()
 
+<<<<<<< HEAD
+for d in [0, 3, 9]:
+    phi_x = phi(np.array([[x_val]]), d).values
+    mu = float(phi_x @ modelos_BAY[d]['mean'])
+    var = (1.0 / BETA) + float(phi_x @
+                               # Var[y* | ...]
+                               modelos_BAY[d]['cov'] @ phi_x.T)
+    sigma = np.sqrt(var)
+    distributions[d] = (mu, sigma)
+
+# Graficar densidades normales p(y | x=0.1, M_d)
+plt.figure(figsize=(7, 5))
+labels = {0: "Rígido (grado 0)", 3: "Simple (grado 3)",
+          9: "Complejo (grado 9)"}
+for d, (mu, sigma) in distributions.items():
+    grid = np.linspace(mu - 4*sigma, mu + 4*sigma, 400)
+    pdf = (1.0 / (np.sqrt(2*np.pi) * sigma)) * \
+        np.exp(-0.5 * ((grid - mu)/sigma)**2)
+    plt.plot(grid, pdf, linewidth=2, label=labels[d])
+plt.axvline(x=y_true, color='k', linestyle='--', label='Valor real')
+plt.xlabel(r"$y \mid x=0.1$")
+plt.ylabel(r"$P(\text{Dato}\mid \text{Modelo } d)$")
+plt.title("Predicción en x = 0.1")
+=======
 #%% 2.2)
 
 # Modelo base
@@ -316,10 +353,52 @@ plt.scatter(df_f.altura_madre, df_f.altura, s=16, alpha=0.7, label="Mujeres")
 plt.plot(x_grid, mu_pred_base, lw=2, label="Modelo base (media posterior)")
 plt.xlabel("Altura madre")
 plt.ylabel("Altura descendencia")
+>>>>>>> d9815ad4f87517116fb4f8fb6917f747c3a56894
 plt.legend()
 plt.tight_layout()
 plt.show()
 
+<<<<<<< HEAD
+# %% [markdown]
+# # Ejercicio 2
+# ### Efecto causal del sexo biol ́ogico sobre la altura.
+
+Alturas = pd.read_csv("alturas.csv")
+Alturas.head()
+hombres = Alturas[Alturas["sexo"] == "M"]
+mujeres = Alturas[Alturas["sexo"] == "F"]
+
+plt.figure(figsize=(7, 5))
+plt.scatter(hombres.altura_madre, hombres.altura,
+            alpha=0.5, c="blue", label="Hombres")
+plt.scatter(mujeres.altura_madre, mujeres.altura,
+            alpha=0.5, c="red", label="Mujeres")
+
+plt.xlabel("Altura madre (cm)")
+plt.ylabel("Altura hijo (cm)")
+plt.title("Altura de hijos vs altura de madres")
+plt.legend()
+plt.show()
+# %%
+N, _ = Alturas.shape
+Y_alturas = Alturas.altura
+X_base = pd.DataFrame({"Base": [1 for _ in range(N)],    # Origen
+                       "Altura": Alturas.altura_madre,  # Pendiente
+                       })
+
+
+log_evidence_base = ml.log_evidence(Y_alturas, X_base)
+
+
+# %%
+modelos_BAY = []
+for d in range(D):
+    MU_d, COV_d = ml.posterior(Y, phi(X, d))
+    log_evidence_d = ml.log_evidence(Y, phi(X, d))[0][0]
+    modelos_BAY.append({"mean": MU_d.reshape(
+        1, d+1)[0], "cov": COV_d, "log_evidence": log_evidence_d})
+
+=======
 #%%
 
 print("Modelo biológico")
@@ -446,6 +525,7 @@ posteriors = np.exp(log_posteriors)
 print("Posteriores (Base, Bio, ID):", posteriors)
 #%%
 log_evidence_base
+>>>>>>> d9815ad4f87517116fb4f8fb6917f747c3a56894
 
 # %%
 #
@@ -461,7 +541,7 @@ Y_grilla = realidad_causal_subyacente(X_grilla, np.inf)
 
 # Ejercicio 2
 
-Alturas = pd.read_csv("datos/alturas.csv")
+Alturas = pd.read_csv("alturas.csv")
 Alturas.head()
 
 
@@ -500,3 +580,5 @@ MU_3_1
 model_ols_3_1 = OLS(y, X_3_1).fit()
 model_ols_3_1.summary()
 MU_3_1_ols = model_ols_3_1.params
+
+# %%
