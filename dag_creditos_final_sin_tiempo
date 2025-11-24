@@ -1,0 +1,32 @@
+// DAG Créditos Final (Un Mes)
+digraph {
+	rankdir=TB
+	Ventas [label="Ventas (Outcome)" color=lightblue shape=ellipse style=filled]
+	Monto [label="Monto Crédito (Treatment)" color=lightgrey shape=ellipse style=filled]
+	Plazo [label=Plazo]
+	Riesgo [label="Nivel Riesgo"]
+	Compras [label="Compras Pasadas"]
+	Sector [label=Sector]
+	Antiguedad [label="Antigüedad"]
+	node [color=gray style=dashed]
+	U_Riesgo [label=U_Riesgo]
+	U_Plazo [label=U_Plazo]
+	U_Compras [label=U_Compras]
+	U_Ventas [label=U_Ventas]
+	Antiguedad -> Sector
+	Sector -> Compras
+	Antiguedad -> Compras
+	Plazo -> Monto
+	Riesgo -> Monto
+	Compras -> Monto
+	Antiguedad -> Monto
+	Monto -> Ventas
+	Plazo -> Ventas
+	Sector -> Ventas
+	Antiguedad -> Ventas
+	Riesgo -> Plazo
+	U_Riesgo -> Riesgo
+	U_Plazo -> Plazo
+	U_Compras -> Compras
+	U_Ventas -> Ventas
+}

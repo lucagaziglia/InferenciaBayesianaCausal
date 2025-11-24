@@ -1,4 +1,4 @@
-#%%
+# %%
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
@@ -36,6 +36,7 @@ def ps_rcM1(s, r, c):  # P(s|r,c,M=1)
     cajas_disponibles = [x for x in H if x != c and x != r]
     return 1 / len(cajas_disponibles)
 
+
 def prcs_M(r, c, s, m):  # P(r,c,s|M)
     # producto de las condicionales
     if s not in H or r not in H or c not in H:
@@ -43,6 +44,7 @@ def prcs_M(r, c, s, m):  # P(r,c,s|M)
     if m not in [0, 1]:
         raise ValueError("m debe ser 0 o 1")
     return pr(r) * pc(c) * (ps_rM0(s, r) if m == 0 else ps_rcM1(s, r, c))
+
 
 def pEpisodio_M(c, s, r, m):  # P(Datos = (c,s,r) | M)
     # Predicción del conjunto de datos P(c,s,r|M)
@@ -52,7 +54,7 @@ def pEpisodio_M(c, s, r, m):  # P(Datos = (c,s,r) | M)
         raise ValueError("s,r,c deben ser 0,1,2")
     return prcs_M(r, c, s, m)
 
-## Modelo alternativo
+# Modelo alternativo
 
 
 def pcsr_p(c, s, r, p):
@@ -103,18 +105,19 @@ def pEpisodio_DatosMa(Episodio, Datos):
     return total
 
 
-#%%
-df_monty = pd.read_csv('../../materiales_del_curso/11-final/datos/NoMontyHall.csv')
+# %%
+df_monty = pd.read_csv(
+    '../../materiales_del_curso/11-final/datos/NoMontyHall.csv')
 Datos = list(df_monty.iloc[:2000].itertuples(index=False, name=None))
 Datos[0]
-#%%
-evidencias =[]
+# %%
+evidencias = []
 datos_previos = []
 for d in Datos:
     evidencia_base = pEpisodio_M(d[0], d[1], d[2], 0)
     evidencia_monty = pEpisodio_M(d[0], d[1], d[2], 1)
     evidencia_alternativo = pEpisodio_DatosMa(d, datos_previos)
-        
+
     predicciones = [evidencia_base, evidencia_monty, evidencia_alternativo]
     datos_previos.append(d)
 
@@ -128,8 +131,7 @@ df_evidencia = pd.DataFrame(
 df_evidencia.to_csv('../../entregas/11-final/EvidenciasNoMontyHall.csv')
 
 # %%
-import matplotlib.pyplot as plt
-plt.figure(figsize=(12,5))
+plt.figure(figsize=(12, 5))
 
 plt.plot(df_evidencia['Base'], label="M0 Base")
 plt.plot(df_evidencia['MontyHall'], label="M1 Monty")
@@ -145,19 +147,19 @@ plt.tight_layout()
 plt.show()
 
 # %%
-plt.figure(figsize=(12,4))
+plt.figure(figsize=(12, 4))
 
-plt.subplot(1,3,1)
+plt.subplot(1, 3, 1)
 plt.hist(df_evidencia['Base'], bins=30)
 plt.title("Base (M0)")
 plt.yscale("log")
 
-plt.subplot(1,3,2)
+plt.subplot(1, 3, 2)
 plt.hist(df_evidencia['MontyHall'], bins=30)
 plt.title("Monty Hall (M1)")
 plt.yscale("log")
 
-plt.subplot(1,3,3)
+plt.subplot(1, 3, 3)
 plt.hist(df_evidencia['Alternativo'], bins=30)
 plt.title("Alternativo (M2)")
 plt.yscale("log")
@@ -165,7 +167,6 @@ plt.yscale("log")
 plt.tight_layout()
 plt.show()
 
-#%%
+# %%
 
 '''Justificación del ejercicio'''
-
